@@ -7,7 +7,6 @@ const Shell     = imports.gi.Shell;
 const Clutter   = imports.gi.Clutter;
 const Main      = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
-const Lang      = imports.lang;
 const Signals   = imports.signals;
 const Mainloop  = imports.mainloop;
 
@@ -20,7 +19,6 @@ const _        = Gettext.gettext;
 const ngettext = Gettext.ngettext;
 
 
-const FULLSCREEN    = ME.imports.lib.fullscreen;
 const SIG_MANAGER   = ME.imports.lib.signal_manager;
 const KEY_MANAGER   = ME.imports.lib.keybinding_manager;
 const PANEL_ITEM    = ME.imports.lib.panel_item;
@@ -57,12 +55,9 @@ const NotifStyle = {
 // @ext      : obj (main extension object)
 // @settings : obj (extension settings)
 // =====================================================================
-var SectionMain = new Lang.Class({
-    Name    : 'Timepp.Stopwatch',
-    Extends : ME.imports.sections.section_base.SectionBase,
-
-    _init: function (section_name, ext, settings) {
-        this.parent(section_name, ext, settings);
+var SectionMain = class extends ME.imports.sections.section_base.SectionBase {
+    constructor (section_name, ext, settings) {
+        super(section_name, ext, settings);
 
         this.actor.add_style_class_name('stopwatch-section');
 
@@ -250,9 +245,9 @@ var SectionMain = new Lang.Class({
             this._update_time_display();
             this.state = StopwatchState.STOPPED;
         }
-    },
+    }
 
-    disable_section: function () {
+    disable_section () {
         if (this.time_backup_mainloop_id) {
             Mainloop.source_remove(this.time_backup_mainloop_id);
             this.time_backup_mainloop_id = null;
@@ -269,18 +264,18 @@ var SectionMain = new Lang.Class({
             this.fullscreen = null;
         }
 
-        this.parent();
-    },
+        super.disable_section();
+    }
 
-    _store_cache: function () {
+    _store_cache () {
         if (! this.cache_file.query_exists(null))
             this.cache_file.create(Gio.FileCreateFlags.NONE, null);
 
         this.cache_file.replace_contents(JSON.stringify(this.cache, null, 2),
             null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-    },
+    }
 
-    start: function () {
+    start () {
         this.start_time = GLib.get_monotonic_time() - this.cache.time;
 
         if (!this.fullscreen.is_open && this.actor.visible)
@@ -295,9 +290,9 @@ var SectionMain = new Lang.Class({
 
         this._store_cache();
         this._tic();
-    },
+    }
 
-    stop: function () {
+    stop () {
         if (this.start_time)
             this.cache.time = GLib.get_monotonic_time() - this.start_time;
 
@@ -321,9 +316,9 @@ var SectionMain = new Lang.Class({
         this._toggle_buttons();
 
         this._store_cache();
-    },
+    }
 
-    reset: function () {
+    reset () {
         if (this.tic_mainloop_id) {
             Mainloop.source_remove(this.tic_mainloop_id);
             this.tic_mainloop_id = null;
@@ -348,16 +343,16 @@ var SectionMain = new Lang.Class({
         this._panel_item_UI_update();
         this._destroy_laps();
         this.header.label.text = _('Stopwatch');
-    },
+    }
 
-    stopwatch_toggle: function () {
+    stopwatch_toggle () {
         if (this.state === StopwatchState.RUNNING)
             this.stop();
         else
             this.start();
-    },
+    }
 
-    _tic: function () {
+    _tic () {
         this.cache.time = GLib.get_monotonic_time() - this.start_time;
 
         this._update_time_display();
@@ -372,17 +367,17 @@ var SectionMain = new Lang.Class({
                 this._tic();
             });
         }
-    },
+    }
 
-    _update_time_display: function () {
+    _update_time_display () {
         let txt = this._time_format_str();
 
         this.header.label.text = txt;
         this.panel_item.set_label(txt);
         this.fullscreen.set_banner_text(txt);
-    },
+    }
 
-    _time_format_str: function () {
+    _time_format_str () {
         let t   = Math.floor(this.cache.time / 10000); // centiseconds
 
         let cs  = t % 100;
@@ -400,24 +395,24 @@ var SectionMain = new Lang.Class({
             case ClockFormat.H_M_S_CS:
                 return "%02d:%02d:%02d.%02d".format(h, m, s, cs);
         }
-    },
+    }
 
-    _panel_item_UI_update: function () {
+    _panel_item_UI_update () {
         if (this.state === StopwatchState.RUNNING)
             this.panel_item.actor.add_style_class_name('on');
         else
             this.panel_item.actor.remove_style_class_name('on');
-    },
+    }
 
-    lap: function () {
+    lap () {
         if (this.state !== StopwatchState.RUNNING) return;
 
         this.cache.laps.push(this._time_format_str());
         this._store_cache();
         this._update_laps();
-    },
+    }
 
-    _update_laps: function () {
+    _update_laps () {
         let n = this.cache.laps.length;
 
         if (n === 0) return;
@@ -437,14 +432,14 @@ var SectionMain = new Lang.Class({
         this.fullscreen.laps_string.clutter_text.set_markup(markup);
         this.laps_wrapper.actor.show();
         this.fullscreen.laps_scroll.show();
-    },
+    }
 
-    _destroy_laps: function () {
+    _destroy_laps () {
         this.laps_wrapper.actor.hide();
         this.laps_string.text = '';
-    },
+    }
 
-    _toggle_buttons: function () {
+    _toggle_buttons () {
         switch (this.state) {
             case StopwatchState.RESET:
                 this.button_reset.hide();
@@ -485,9 +480,9 @@ var SectionMain = new Lang.Class({
                 this.fullscreen.button_start.add_style_pseudo_class('last-child');
                 break;
         }
-    },
+    }
 
-    show_fullscreen: function () {
+    show_fullscreen () {
         this.ext.menu.close();
 
         if (! this.fullscreen) {
@@ -496,35 +491,34 @@ var SectionMain = new Lang.Class({
         }
 
         this.fullscreen.open();
-    },
+    }
 
-    _periodic_time_backup: function () {
+    _periodic_time_backup () {
         this.cache.time = GLib.get_monotonic_time() - this.start_time;
         this._store_cache();
 
         this.time_backup_mainloop_id = Mainloop.timeout_add_seconds(60, () => {
             this._periodic_time_backup();
         });
-    },
+    }
 
-    _toggle_panel_mode: function () {
+    _toggle_panel_mode () {
         if (this.settings.get_enum('stopwatch-panel-mode') === 0)
             this.panel_item.set_mode('icon');
         else if (this.settings.get_enum('stopwatch-panel-mode') === 1)
             this.panel_item.set_mode('text');
         else
             this.panel_item.set_mode('icon_text');
-    },
+    }
 
     // returns int (microseconds)
-    get_time: function () {
+    get_time () {
         if (this.state === StopwatchState.RUNNING)
             return GLib.get_monotonic_time() - this.start_time;
         else
             return this.cache.time;
-    },
-});
-Signals.addSignalMethods(SectionMain.prototype);
+    }
+}; Signals.addSignalMethods(SectionMain.prototype);
 
 
 
@@ -537,12 +531,10 @@ Signals.addSignalMethods(SectionMain.prototype);
 //
 // signals: 'monitor-changed'
 // =====================================================================
-const StopwatchFullscreen = new Lang.Class({
-    Name    : 'Timepp.StopwatchFullscreen',
-    Extends : FULLSCREEN.Fullscreen,
+class StopwatchFullscreen extends ME.imports.lib.fullscreen.Fullscreen {
+    constructor (ext, delegate, monitor) {
+        super(monitor);
 
-    _init: function (ext, delegate, monitor) {
-        this.parent(monitor);
         this.middle_box.vertical = false;
 
         this.ext      = ext;
@@ -621,9 +613,9 @@ const StopwatchFullscreen = new Lang.Class({
                     return Clutter.EVENT_PROPAGATE;
             }
         });
-    },
+    }
 
-    close: function () {
+    close () {
         if (this.delegate.state === StopwatchState.RESET) {
             this.actor.style_class = this.default_style_class;
 
@@ -640,20 +632,19 @@ const StopwatchFullscreen = new Lang.Class({
             }
         }
 
-        this.parent();
-    },
+        super.close();
+    }
 
-    on_timer_started: function () {
+    on_timer_started () {
         this.actor.style_class = this.default_style_class;
-    },
+    }
 
-    on_timer_stopped: function () {
+    on_timer_stopped () {
         this.actor.style_class = this.default_style_class + ' timer-stopped';
-    },
+    }
 
-    on_timer_reset: function () {
+    on_timer_reset () {
         this.laps_scroll.hide();
         this.laps_string.text = '';
-    },
-});
-Signals.addSignalMethods(StopwatchFullscreen.prototype);
+    }
+}; Signals.addSignalMethods(StopwatchFullscreen.prototype);

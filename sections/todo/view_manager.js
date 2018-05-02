@@ -1,7 +1,6 @@
 const Gtk      = imports.gi.Gtk;
 const Clutter  = imports.gi.Clutter;
 const Main     = imports.ui.main;
-const Lang     = imports.lang;
 const Signals  = imports.signals;
 const Mainloop = imports.mainloop;
 
@@ -23,10 +22,8 @@ const G = ME.imports.sections.todo.GLOBAL;
 // - To switch to a new view, use the show_view function of this object.
 // - The current_view is always stored in the current_view var of this obj.
 // =====================================================================
-var ViewManager = new Lang.Class({
-    Name: 'Timepp.ViewManager',
-
-    _init: function (ext, delegate) {
+var ViewManager = class {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -54,7 +51,7 @@ var ViewManager = new Lang.Class({
 
             return Clutter.EVENT_PROPAGATE;
         });
-    },
+    }
 
     // @view: object of the form: { view_name      : View,
     //                              actors         : array,
@@ -79,7 +76,7 @@ var ViewManager = new Lang.Class({
     // @open_callback (optional):
     //   Function that is used to open the view. If it is not given, then
     //   opening the view means that the actors will be added to the popup menu.
-    show_view: function (view) {
+    show_view (view) {
         Main.panel.menuManager.ignoreRelease();
 
         if (this.delegate.tasks_scroll_wrapper.visible)
@@ -118,7 +115,7 @@ var ViewManager = new Lang.Class({
 
         if (this.ext.menu.isOpen)
             Mainloop.timeout_add(0, () => view.focused_actor.grab_key_focus());
-    },
+    }
 
     // @SPEED
     // Showing/adding actors to the popup menu can be somewhat laggy if there
@@ -128,7 +125,7 @@ var ViewManager = new Lang.Class({
     //
     // Also, each time the popup menu closes, we hide the tasks, and show them
     // using this func after the menu opens.
-    _show_tasks: function () {
+    _show_tasks () {
         if (! this.ext.menu.isOpen) return;
 
         this.delegate.tasks_scroll.vscrollbar_policy = Gtk.PolicyType.NEVER;
@@ -142,9 +139,9 @@ var ViewManager = new Lang.Class({
         this.show_tasks_mainloop_id = Mainloop.idle_add(() => {
            this._show_tasks__finish(n);
         });
-    },
+    }
 
-    _show_tasks__finish: function (i, scroll_bar_shown) {
+    _show_tasks__finish (i, scroll_bar_shown) {
         if (!scroll_bar_shown && this.ext.needs_scrollbar()) {
             this.delegate.tasks_scroll.vscrollbar_policy = Gtk.PolicyType.ALWAYS;
             scroll_bar_shown = true;
@@ -163,9 +160,9 @@ var ViewManager = new Lang.Class({
         this.show_tasks_mainloop_id = Mainloop.idle_add(() => {
             this._show_tasks__finish(++i, scroll_bar_shown);
         });
-    },
+    }
 
-    _hide_tasks: function () {
+    _hide_tasks () {
         if (this.show_tasks_mainloop_id) {
             Mainloop.source_remove(this.show_tasks_mainloop_id);
             this.show_tasks_mainloop_id = null;
@@ -173,6 +170,5 @@ var ViewManager = new Lang.Class({
 
         for (let i = 0, len = this.delegate.tasks_viewport.length; i < len; i++)
             this.delegate.tasks_viewport[i].actor.visible = false;
-    },
-});
-Signals.addSignalMethods(ViewManager.prototype);
+    }
+}; Signals.addSignalMethods(ViewManager.prototype);

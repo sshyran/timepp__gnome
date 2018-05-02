@@ -3,7 +3,6 @@ const Meta    = imports.gi.Meta;
 const Clutter = imports.gi.Clutter;
 const DND     = imports.ui.dnd;
 const Main    = imports.ui.main;
-const Lang    = imports.lang;
 const Signals = imports.signals;
 
 
@@ -26,10 +25,8 @@ const G = ME.imports.sections.todo.GLOBAL;
 //
 // @signals: 'update-sort'
 // =====================================================================
-var TaskSortWindow = new Lang.Class({
-    Name: 'Timepp.TaskSortWindow',
-
-    _init: function (ext, delegate) {
+var TaskSortWindow = class {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -87,9 +84,9 @@ var TaskSortWindow = new Lang.Class({
         this.button_ok.connect('clicked', () => {
             this._on_ok_clicked();
         });
-    },
+    }
 
-    _on_ok_clicked: function () {
+    _on_ok_clicked () {
         let res      = [];
         let children = this.sort_items_box.get_children();
 
@@ -99,9 +96,9 @@ var TaskSortWindow = new Lang.Class({
         }
 
         this.emit('update-sort', res);
-    },
+    }
 
-    _new_sort_type_item: function (sort_type, sort_order) {
+    _new_sort_type_item (sort_type, sort_order) {
         let item = {};
 
         item.sort_type  = sort_type;
@@ -208,10 +205,10 @@ var TaskSortWindow = new Lang.Class({
         item.label.connect('leave-event', () => {
             global.screen.set_cursor(Meta.Cursor.DEFAULT);
         });
-    },
+    }
 
     // Called from within item.draggable.
-    handleDragOver: function (source, actor, x, y, time) {
+    handleDragOver (source, actor, x, y, time) {
         if (source._delegate !== this.sort_items_box)
             return DND.DragMotionResult.NO_DROP;
 
@@ -225,10 +222,10 @@ var TaskSortWindow = new Lang.Class({
         this.sort_items_box.set_child_at_index(this.dnd_placeholder, this.dnd_pos);
 
         return DND.DragMotionResult.MOVE_DROP;
-    },
+    }
 
     // Called from within item.draggable.
-    acceptDrop: function (source, actor, x, y, time) {
+    acceptDrop (source, actor, x, y, time) {
         if (source._delegate !== this.sort_items_box || this.dnd_pos === null)
             return false;
 
@@ -236,6 +233,5 @@ var TaskSortWindow = new Lang.Class({
         this.sort_items_box.insert_child_at_index(source.actor, this.dnd_pos);
 
         return true;
-    },
-});
-Signals.addSignalMethods(TaskSortWindow.prototype);
+    }
+}; Signals.addSignalMethods(TaskSortWindow.prototype);

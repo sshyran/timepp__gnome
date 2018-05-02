@@ -5,7 +5,6 @@ const Clutter   = imports.gi.Clutter;
 const Main      = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
-const Lang      = imports.lang;
 const Mainloop  = imports.mainloop;
 
 
@@ -44,12 +43,9 @@ const PanelPosition = {
 // =====================================================================
 // @@@ Main extension object
 // =====================================================================
-const Timepp = new Lang.Class({
-    Name    : 'Timepp.Timepp',
-    Extends : PanelMenu.Button,
-
-    _init: function () {
-        this.parent(0.5, 'Timepp');
+class Timepp extends PanelMenu.Button {
+    constructor () {
+        super(0.5, 'Timepp');
 
         this.actor.style_class = '';
         this.actor.can_focus   = false;
@@ -219,9 +215,9 @@ const Timepp = new Lang.Class({
         this.sigm.connect(this.unicon_panel_item, 'left-click', () => this.toggle_menu());
         this.sigm.connect(this.unicon_panel_item, 'right-click', () => this.toggle_context_menu());
         this.sigm.connect(this.unicon_panel_item.actor, 'enter-event', () => { if (Main.panel.menuManager.activeMenu) this.open_menu(); });
-    },
+    }
 
-    _sync_sections_with_settings: function () {
+    _sync_sections_with_settings () {
         let sections = this.settings.get_value('sections').deep_unpack();
 
         for (let key in sections) {
@@ -254,12 +250,12 @@ const Timepp = new Lang.Class({
         }
 
         this.update_panel_items();
-    },
+    }
 
-    toggle_menu: function (section_name) {
+    toggle_menu (section_name) {
         if (this.menu.isOpen) this.menu.close(false);
         else                  this.open_menu(section_name);
-    },
+    }
 
     // @section: obj (a section's main object)
     //
@@ -271,7 +267,7 @@ const Timepp = new Lang.Class({
     //
     //     - If @section is not a sep menu, we show all joined sections that
     //       are enabled.
-    open_menu: function (section_name) {
+    open_menu (section_name) {
         if (this.context_menu.actor.visible) return;
 
         this.unicon_panel_item.actor.remove_style_pseudo_class('checked');
@@ -333,9 +329,9 @@ const Timepp = new Lang.Class({
 
         for (let i = 0; i < hidden_sections.length; i++)
             hidden_sections[i].on_section_open_state_changed(false);
-    },
+    }
 
-    toggle_context_menu: function (section_name) {
+    toggle_context_menu (section_name) {
         if (this.menu.isOpen) {
             this.menu.close(false);
             return;
@@ -359,16 +355,16 @@ const Timepp = new Lang.Class({
 
         this._update_separators();
         this.menu.open(false);
-    },
+    }
 
-    _update_menu_arrow: function (source_actor) {
+    _update_menu_arrow (source_actor) {
         if (this.menu.isOpen)
             this.menu._boxPointer.setPosition(source_actor, this.menu._arrowAlignment);
         else
             this.menu.sourceActor = source_actor;
-    },
+    }
 
-    _update_separators: function () {
+    _update_separators () {
         let last_visible;
 
         for (let [k, sep] of this.separators) {
@@ -382,9 +378,9 @@ const Timepp = new Lang.Class({
         }
 
         if (last_visible) last_visible.hide();
-    },
+    }
 
-    _update_custom_css: function () {
+    _update_custom_css () {
         let update_needed = false;
         let theme_node    = this.panel_item_box.get_theme_node();
 
@@ -407,9 +403,9 @@ const Timepp = new Lang.Class({
         }
 
         if (update_needed) this.emit('custom-css-changed');
-    },
+    }
 
-    update_panel_items: function () {
+    update_panel_items () {
         if (this.settings.get_boolean('unicon-mode')) {
             let show_unicon = false;
 
@@ -432,9 +428,9 @@ const Timepp = new Lang.Class({
                 section.panel_item.actor.visible = true;
             }
         }
-    },
+    }
 
-    _on_panel_position_changed: function (old_pos, new_pos) {
+    _on_panel_position_changed (old_pos, new_pos) {
         let ref = this.container;
 
         switch (old_pos) {
@@ -459,9 +455,9 @@ const Timepp = new Lang.Class({
             case PanelPosition.RIGHT:
                 Main.panel._rightBox.insert_child_at_index(ref, 0);
         }
-    },
+    }
 
-    _on_open_state_changed: function (state) {
+    _on_open_state_changed (state) {
         if (state) return Clutter.EVENT_PROPAGATE;
 
         this.context_menu.actor.hide();
@@ -479,14 +475,14 @@ const Timepp = new Lang.Class({
                 section.actor.visible = false;
             }
         }
-    },
+    }
 
-    _on_theme_changed: function () {
+    _on_theme_changed () {
         if (this.custom_stylesheet) this._unload_stylesheet();
         this._load_stylesheet();
-    },
+    }
 
-    _load_stylesheet: function () {
+    _load_stylesheet () {
         this.theme_change_signal_block = true;
 
         // determine custom stylesheet
@@ -517,9 +513,9 @@ const Timepp = new Lang.Class({
         Main.loadTheme();
 
         Mainloop.idle_add(() => this.theme_change_signal_block = false);
-    },
+    }
 
-    _unload_stylesheet: function () {
+    _unload_stylesheet () {
 
         if (! this.custom_stylesheet) return;
 
@@ -527,17 +523,17 @@ const Timepp = new Lang.Class({
             .unload_stylesheet(this.custom_stylesheet);
 
         this.custom_stylesheet = null;
-    },
+    }
 
-    is_section_enabled: function (section_name) {
+    is_section_enabled (section_name) {
         return this.sections.has(section_name);
-    },
+    }
 
     // Used by sections to communicate with each other.
     // This way any section can listen for signals on the main ext object.
-    emit_to_sections: function (sig, section_name, data) {
+    emit_to_sections (sig, section_name, data) {
         this.emit(sig, {section_name, data});
-    },
+    }
 
     // @HACK
     // ScrollView always allocates horizontal space for the scrollbar when the
@@ -548,14 +544,14 @@ const Timepp = new Lang.Class({
     // This works because we only need to show the scrollbar of a scrollview
     // in the popup when the popup menu exceeds it's max height which is roughly
     // the height of the monitor.
-    needs_scrollbar: function () {
+    needs_scrollbar () {
         let [min_h,] = this.menu.actor.get_preferred_height(-1);
         let max_h    = this.menu.actor.get_theme_node().get_max_height();
 
         return max_h >= 0 && min_h >= max_h;
-    },
+    }
 
-    destroy: function () {
+    destroy () {
         for (let [, section] of this.sections) {
             section.disable_section();
         }
@@ -572,9 +568,9 @@ const Timepp = new Lang.Class({
         // already be destroyed by this point.
         this.menu.sourceActor = this.actor;
 
-        this.parent();
-    },
-});
+        super.destroy();
+    }
+};
 
 
 

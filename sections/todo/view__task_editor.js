@@ -4,7 +4,6 @@ const Gio      = imports.gi.Gio
 const Meta     = imports.gi.Meta;
 const Clutter  = imports.gi.Clutter;
 const Main     = imports.ui.main;
-const Lang     = imports.lang;
 const Signals  = imports.signals;
 const Mainloop = imports.mainloop;
 
@@ -46,10 +45,8 @@ const G = ME.imports.sections.todo.GLOBAL;
 // of that task object and the signals 'delete-task' and 'edit-task' will be
 // used instead of 'add-task'.
 // =====================================================================
-var TaskEditor = new Lang.Class({
-    Name: 'Timepp.TaskEditor',
-
-    _init: function (ext, delegate, task) {
+var TaskEditor = class {
+    constructor (ext, delegate, task) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -184,10 +181,10 @@ var TaskEditor = new Lang.Class({
             if (event.get_key_symbol() === Clutter.Return)
                 MISC_UTILS.open_web_uri(TODO_TXT_SYNTAX_URL)
         });
-    },
+    }
 
     // @word: string (a context or project)
-    _show_completions: function (word) {
+    _show_completions (word) {
         let completions = null;
 
         if (word === '(')
@@ -215,14 +212,14 @@ var TaskEditor = new Lang.Class({
 
         this.completion_menu_content.first_child.pseudo_class = 'active';
         this.curr_selected_completion = this.completion_menu_content.first_child;
-    },
+    }
 
     // @needle   : string (a context or project)
     // @haystack : map    (of all contexts or projects);
     //
     // If @needle is a context, then the @haystack has to be the map of all
     // contexts. Likewise for projects.
-    _find_completions: function (needle, haystack) {
+    _find_completions (needle, haystack) {
         if (needle === '@' || needle === '+') {
             let res = [];
             for (let [key,] of haystack) res.push(key);
@@ -248,11 +245,11 @@ var TaskEditor = new Lang.Class({
         }
 
         return results;
-    },
+    }
 
     // Get the word that the cursor is currently on or null if the word is not
     // a context/project.
-    _get_current_word: function () {
+    _get_current_word () {
         let text = this.entry.entry.get_text();
 
         if (! text) return null;
@@ -293,9 +290,9 @@ var TaskEditor = new Lang.Class({
         else {
             return null;
         }
-    },
+    }
 
-    _on_tab: function () {
+    _on_tab () {
         this.curr_selected_completion.pseudo_class = '';
 
         let next = this.curr_selected_completion.get_next_sibling();
@@ -312,9 +309,9 @@ var TaskEditor = new Lang.Class({
         MISC_UTILS.scroll_to_item(this.completion_menu,
                                   this.completion_menu_content,
                                   this.curr_selected_completion);
-    },
+    }
 
-    _on_completion_selected: function () {
+    _on_completion_selected () {
         if (!this.curr_selected_completion) return;
 
         this.text_changed_handler_block = true;
@@ -338,9 +335,9 @@ var TaskEditor = new Lang.Class({
         this.completion_menu.hide();
 
         this.text_changed_handler_block = false;
-    },
+    }
 
-    _on_completion_hovered: function (item) {
+    _on_completion_hovered (item) {
         // It seems that when the completion menu gets hidden, the items are
         // moving for a brief moment which triggers the hover callback.
         // We prevent any possible issues in this case by just checking whether
@@ -350,9 +347,9 @@ var TaskEditor = new Lang.Class({
         this.curr_selected_completion.pseudo_class = '';
         this.curr_selected_completion = item;
         item.pseudo_class = 'active';
-    },
+    }
 
-    _create_task_str: function () {
+    _create_task_str () {
         if (this.mode === 'edit-task') return this.entry.entry.get_text();
 
         // If in add mode, we insert a creation date if the user didn't do it.
@@ -373,7 +370,5 @@ var TaskEditor = new Lang.Class({
         }
 
         return words.join(' ');
-    },
-});
-Signals.addSignalMethods(TaskEditor.prototype);
-
+    }
+}; Signals.addSignalMethods(TaskEditor.prototype);

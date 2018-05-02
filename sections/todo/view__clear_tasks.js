@@ -1,7 +1,6 @@
 const St      = imports.gi.St;
 const Clutter = imports.gi.Clutter;
 const Main    = imports.ui.main;
-const Lang    = imports.lang;
 const Signals = imports.signals;
 
 
@@ -27,10 +26,8 @@ const G = ME.imports.sections.todo.GLOBAL;
 //   - 'archive-all' (delete and write to done.txt all completed tasks)
 //   - 'cancel'
 // =====================================================================
-var ClearCompletedTasks = new Lang.Class({
-    Name: 'Timepp.ClearCompletedTasks',
-
-    _init: function (ext, delegate) {
+var ClearCompletedTasks = class {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -121,6 +118,5 @@ var ClearCompletedTasks = new Lang.Class({
                 this.emit('archive-all');
         });
         this.button_cancel.connect('clicked', () => { this.emit('cancel'); });
-    },
-});
-Signals.addSignalMethods(ClearCompletedTasks.prototype);
+    }
+}; Signals.addSignalMethods(ClearCompletedTasks.prototype);

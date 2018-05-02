@@ -1,7 +1,6 @@
 const St      = imports.gi.St;
 const Gtk     = imports.gi.Gtk;
 const Main    = imports.ui.main;
-const Lang    = imports.lang;
 const Signals = imports.signals;
 
 
@@ -31,10 +30,8 @@ const G = ME.imports.sections.todo.GLOBAL;
 //   - 'switch' (returns the unique name of the new todo file)
 //   - 'close'
 // =====================================================================
-var TodoFileSwitcher = new Lang.Class({
-    Name: 'Timepp.TodoFileSwitcher',
-
-    _init: function (ext, delegate) {
+var TodoFileSwitcher = class {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -106,9 +103,9 @@ var TodoFileSwitcher = new Lang.Class({
             if (ext.needs_scrollbar())
                 this.items_scroll.vscrollbar_policy = Gtk.PolicyType.ALWAYS;
         });
-    },
+    }
 
-    _load_items: function () {
+    _load_items () {
         let it, item, is_current, current_item;
 
         for (let i = 0, len = this.todo_files.length; i < len; i++) {
@@ -171,9 +168,9 @@ var TodoFileSwitcher = new Lang.Class({
 
         this.selected_item              = current_item;
         current_item.actor.pseudo_class = 'active';
-    },
+    }
 
-    _search_files: function () {
+    _search_files () {
         this.items_scroll_content.remove_all_children();
         let needle = this.entry.entry.get_text().toLowerCase();
 
@@ -205,15 +202,14 @@ var TodoFileSwitcher = new Lang.Class({
         else {
             this.selected_item = null;
         }
-    },
+    }
 
-    close: function () {
+    close () {
         if (this.settings_sig_id) {
             this.delegate.settings.disconnect(this.settings_sig_id);
             this.settings_sig_id = null;
         }
 
         this.actor.destroy();
-    },
-});
-Signals.addSignalMethods(TodoFileSwitcher.prototype);
+    }
+}; Signals.addSignalMethods(TodoFileSwitcher.prototype);

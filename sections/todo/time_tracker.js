@@ -3,7 +3,6 @@ const GLib     = imports.gi.GLib;
 const Shell    = imports.gi.Shell;
 const Main     = imports.ui.main;
 const Util     = imports.misc.util;
-const Lang     = imports.lang;
 const Signals  = imports.signals;
 const Mainloop = imports.mainloop;
 
@@ -29,10 +28,8 @@ const G   = ME.imports.sections.todo.GLOBAL;
 // @ext      : obj    (main extension object)
 // @delegate : obj    (main section object)
 // =====================================================================
-var TimeTracker = new Lang.Class({
-    Name: 'Timepp.TimeTracker',
-
-    _init: function (ext, delegate) {
+var TimeTracker = class {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -140,9 +137,9 @@ var TimeTracker = new Lang.Class({
         this.ext.connect('stop-time-tracking-by-id', (_, info) => {
             this.stop_tracking_by_id(info.data);
         });
-    },
+    }
 
-    _tracker_tic: function (...args) {
+    _tracker_tic (...args) {
         let d        = new Date();
         let time     = GLib.get_monotonic_time();
         let time_str = "%02d:%02d:%02d".format(d.getHours(), d.getMinutes(), d.getSeconds());
@@ -164,18 +161,18 @@ var TimeTracker = new Lang.Class({
         this.tic_mainloop_id = Mainloop.timeout_add_seconds(1, () => {
             this._tracker_tic(seconds + 1);
         });
-    },
+    }
 
-    _on_new_day_started: function () {
+    _on_new_day_started () {
         this._archive_daily_csv_file();
 
         let yearly_file_was_archived = this._archive_yearly_csv_file();
 
         // To ensure a fresh yearly csv file.
         if (yearly_file_was_archived) this._init_tracker_dir();
-    },
+    }
 
-    _on_tracker_files_modified: function () {
+    _on_tracker_files_modified () {
         // @HACK
         // The normal handler_block/unblock methods don't work with a file
         // monitor for some reason.
@@ -194,9 +191,9 @@ var TimeTracker = new Lang.Class({
         this._init_tracker_dir();
         this._init_daily_csv_map();
         this._archive_yearly_csv_file();
-    },
+    }
 
-    _write_daily_csv_file: function () {
+    _write_daily_csv_file () {
         if (! this.csv_dir) return;
 
         let today    = G.date_yyyymmdd();
@@ -218,9 +215,9 @@ var TimeTracker = new Lang.Class({
             this.daily_csv_file.replace_contents(projects + tasks, null, false,
                 Gio.FileCreateFlags.REPLACE_DESTINATION, null);
         } catch (e) { logError(e); }
-    },
+    }
 
-    _archive_daily_csv_file: function () {
+    _archive_daily_csv_file () {
         if (! this.csv_dir) return;
 
         this.monitors_block = true;
@@ -247,10 +244,10 @@ var TimeTracker = new Lang.Class({
             if (v.tracking) v.intervals = `${time_str}..${time_str}..`;
             else            v.intervals = '';
         }
-    },
+    }
 
     // Returns bool (true = we archived the yearly file)
-    _archive_yearly_csv_file: function () {
+    _archive_yearly_csv_file () {
         if (! this.csv_dir) return;
 
         let d = new Date();
@@ -265,9 +262,9 @@ var TimeTracker = new Lang.Class({
         }
 
         return false;
-    },
+    }
 
-    _init_tracker_dir: function () {
+    _init_tracker_dir () {
         if (this.daily_csv_file_monitor) {
             this.daily_csv_file_monitor.cancel();
             this.daily_csv_file_monitor = null;
@@ -332,9 +329,9 @@ var TimeTracker = new Lang.Class({
                 this._on_tracker_files_modified();
             });
         } catch (e) { logError(e); }
-    },
+    }
 
-    _init_daily_csv_map: function () {
+    _init_daily_csv_map () {
         if (! this.csv_dir) return;
 
         this.daily_csv_map.clear();
@@ -399,9 +396,9 @@ var TimeTracker = new Lang.Class({
                 }
             }
         }
-    },
+    }
 
-    _parse_csv_line: function (line) {
+    _parse_csv_line (line) {
         let res           = [false];
         let field         = '';
         let inside_quotes = false;
@@ -449,9 +446,9 @@ var TimeTracker = new Lang.Class({
         res[4] = res[4].replace(/""/g, '"');
 
         return res;
-    },
+    }
 
-    _create_csv_line: function (date, time, type, val, intervals) {
+    _create_csv_line (date, time, type, val, intervals) {
         let h, m, s;
 
         {
@@ -494,16 +491,16 @@ var TimeTracker = new Lang.Class({
         } else {
             return `${date}, ${h}:${m}:${s}, ${type}, "${val}"\n`;
         }
-    },
+    }
 
-    toggle_tracking: function (task) {
+    toggle_tracking (task) {
         let val = this.daily_csv_map.get(task.task_str);
 
         if (val && val.tracking) this.stop_tracking(task);
         else                     this.start_tracking(task);
-    },
+    }
 
-    stop_all_tracking: function (do_write_daily_csv_file = true, close_intervals = true) {
+    stop_all_tracking (do_write_daily_csv_file = true, close_intervals = true) {
         if (! this.csv_dir) return;
 
         for (let [k, v] of this.daily_csv_map) {
@@ -512,25 +509,25 @@ var TimeTracker = new Lang.Class({
         }
 
         if (do_write_daily_csv_file) this._write_daily_csv_file();
-    },
+    }
 
-    start_tracking_by_id: function (id) {
+    start_tracking_by_id (id) {
         if (! this.csv_dir) return;
 
         for (let it of this.delegate.tasks) {
             if (it.tracker_id === id) this.start_tracking(it);
         }
-    },
+    }
 
-    stop_tracking_by_id: function (id) {
+    stop_tracking_by_id (id) {
         if (! this.csv_dir) return;
 
         for (let it of this.delegate.tasks) {
             if (it.tracker_id === id) this.stop_tracking(it);
         }
-    },
+    }
 
-    start_tracking: function (task) {
+    start_tracking (task) {
         if (! this.csv_dir) {
             Main.notify(_('To track time, select a dir for csv files in the settings.'));
             return;
@@ -595,9 +592,9 @@ var TimeTracker = new Lang.Class({
         for (let it of this.delegate.tasks) {
             if (it.task_str === task.task_str) it.on_tracker_started();
         }
-    },
+    }
 
-    stop_tracking: function (task, do_write_daily_csv_file = true, close_intervals = true) {
+    stop_tracking (task, do_write_daily_csv_file = true, close_intervals = true) {
         if (!this.csv_dir) return;
 
         let val = this.daily_csv_map.get(task.task_str);
@@ -639,11 +636,11 @@ var TimeTracker = new Lang.Class({
         }
 
         if (do_write_daily_csv_file) this._write_daily_csv_file();
-    },
+    }
 
     // Swap the old_task_str with the new_task_str in the daily_csv_map only.
     // The time tracked on the old_task_str is copied over to the new_task_str.
-    update_record_name: function (old_task_str, new_task_str) {
+    update_record_name (old_task_str, new_task_str) {
         if (!this.csv_dir || this.daily_csv_map.get(new_task_str)) return;
 
         let val = this.daily_csv_map.get(old_task_str);
@@ -662,9 +659,9 @@ var TimeTracker = new Lang.Class({
         this.stats_data.clear();
 
         this._write_daily_csv_file();
-    },
+    }
 
-    get_csv_dir_path: function () {
+    get_csv_dir_path () {
         try {
             let d = this.delegate.settings.get_value('todo-current').deep_unpack().csv_dir;
             let error;
@@ -674,12 +671,12 @@ var TimeTracker = new Lang.Class({
             if (error) return null;
             else       return d;
         } catch (e) { logError(e); }
-    },
+    }
 
     // NOTE: The returned values are cached, use for READ-ONLY!
     //
     // returns: [@stats_data, @stats_unique_tasks, @stats_unique_projects, oldest_date]
-    get_stats: function () {
+    get_stats () {
         if (! this.csv_dir) return null;
 
         let today = G.date_yyyymmdd();
@@ -787,9 +784,9 @@ var TimeTracker = new Lang.Class({
         this.oldest_date = oldest_date;
 
         return [this.stats_data, this.stats_unique_tasks, this.stats_unique_projects, oldest_date];
-    },
+    }
 
-    close: function () {
+    close () {
         this.stop_all_tracking(true, false);
 
         if (this.daily_csv_file_monitor) {
@@ -815,6 +812,5 @@ var TimeTracker = new Lang.Class({
         this.stats_unique_tasks.clear();
         this.stats_unique_projects.clear();
         this.dbus_impl.unexport();
-    },
-});
-Signals.addSignalMethods(TimeTracker.prototype);
+    }
+}; Signals.addSignalMethods(TimeTracker.prototype);

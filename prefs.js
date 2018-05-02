@@ -1,7 +1,6 @@
 const Gio      = imports.gi.Gio;
 const Gtk      = imports.gi.Gtk;
 const GLib     = imports.gi.GLib;
-const Lang     = imports.lang;
 const Mainloop = imports.mainloop;
 
 
@@ -13,10 +12,8 @@ Gettext.bindtextdomain(ME.metadata['gettext-domain'], ME.path + '/locale');
 const _ = Gettext.domain(ME.metadata['gettext-domain']).gettext;
 
 
-const Settings = new Lang.Class({
-    Name: 'Timepp.Settings',
-
-    _init: function () {
+class Settings {
+    constructor () {
         {
             let GioSSS = Gio.SettingsSchemaSource;
             let schema = GioSSS.new_from_directory(
@@ -101,9 +98,9 @@ const Settings = new Lang.Class({
                 }
             }
         });
-    },
+    }
 
-    _show_dialog: function (todo_entry) {
+    _show_dialog (todo_entry) {
         let dialog = new Gtk.Dialog({
             title: '',
             transient_for: this.widget.get_toplevel(),
@@ -253,9 +250,9 @@ const Settings = new Lang.Class({
         // show
         //
         dialog.show_all();
-    },
+    }
 
-    _reset_add_dialog: function () {
+    _reset_add_dialog () {
         this.todo_name_entry.set_text('');
         this.todo_file_chooser.unselect_all();
         this.done_file_chooser.unselect_all();
@@ -264,10 +261,10 @@ const Settings = new Lang.Class({
         // There appears to be no other way to reset a gtk_file_chooser that is
         // used for folder selecting.
         this.csv_dir_chooser.set_uri('');
-    },
+    }
 
     // Bind the gtk window to the schema settings
-    _bind_settings: function () {
+    _bind_settings () {
         let widget;
 
         //
@@ -813,8 +810,8 @@ const Settings = new Lang.Class({
             this.list_store.set_value(row, 2, it.done_file);
             this.list_store.set_value(row, 3, it.csv_dir);
         }
-    },
-});
+    }
+};
 
 function init () {}
 

@@ -11,7 +11,6 @@ const CheckBox    = imports.ui.checkBox;
 const PopupMenu   = imports.ui.popupMenu;
 const MessageTray = imports.ui.messageTray;
 const Slider      = imports.ui.slider;
-const Lang        = imports.lang;
 const Signals     = imports.signals;
 const Mainloop    = imports.mainloop;
 
@@ -25,7 +24,6 @@ const ngettext = Gettext.ngettext;
 
 
 const SOUND_PLAYER    = ME.imports.lib.sound_player;
-const FULLSCREEN      = ME.imports.lib.fullscreen;
 const SIG_MANAGER     = ME.imports.lib.signal_manager;
 const KEY_MANAGER     = ME.imports.lib.keybinding_manager;
 const PANEL_ITEM      = ME.imports.lib.panel_item;
@@ -67,12 +65,9 @@ const NotifStyle = {
 // @ext      : obj (main extension object)
 // @settings : obj (extension settings)
 // =====================================================================
-var SectionMain = new Lang.Class({
-    Name    : 'Timepp.Timer',
-    Extends : ME.imports.sections.section_base.SectionBase,
-
-    _init: function (section_name, ext, settings) {
-        this.parent(section_name, ext, settings);
+var SectionMain = class extends ME.imports.sections.section_base.SectionBase {
+    constructor (section_name, ext, settings) {
+        super(section_name, ext, settings);
 
         this.actor.add_style_class_name('timer-section');
 
@@ -226,9 +221,9 @@ var SectionMain = new Lang.Class({
         this.sigm.connect(this.slider, 'drag-end', () => this.slider_released());
         this.sigm.connect(this.slider.actor, 'scroll-event', () => this.slider_released());
         this.sigm.connect(this.slider_item.actor, 'button-press-event', (_, event) => this.slider.startDragging(event));
-    },
+    }
 
-    disable_section: function () {
+    disable_section () {
         this.dbus_impl.unexport();
         this.stop();
         this._store_cache();
@@ -240,27 +235,27 @@ var SectionMain = new Lang.Class({
             this.fullscreen = null;
         }
 
-        this.parent();
-    },
+        super.disable_section();
+    }
 
-    _store_cache: function () {
+    _store_cache () {
         if (! this.cache_file.query_exists(null))
             this.cache_file.create(Gio.FileCreateFlags.NONE, null);
 
         this.cache_file.replace_contents(JSON.stringify(this.cache, null, 2),
             null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-    },
+    }
 
-    toggle_timer: function () {
+    toggle_timer () {
         if      (this.timer_state === TimerState.STOPPED) this.start();
         else if (this.timer_state === TimerState.RUNNING) this.stop();
-    },
+    }
 
     // This func is used for DBus.
     // DBus has no optional arguments, so @time === 0 and @msg === "null" means
     // that those arguments are omitted, and in that case we don't update the
     // default preset.
-    start_from_default_preset: function (time, msg) {
+    start_from_default_preset (time, msg) {
         this.current_preset = this.cache.default_preset;
 
         if (time > 0)       this.current_preset.time = time;
@@ -269,9 +264,9 @@ var SectionMain = new Lang.Class({
         Mainloop.idle_add(() => this._store_cache());
 
         this.start(this.current_preset.time);
-    },
+    }
 
-    start_from_preset: function (preset, time = null) {
+    start_from_preset (preset, time = null) {
         this.current_preset = preset;
 
         if (time !== null) {
@@ -280,10 +275,10 @@ var SectionMain = new Lang.Class({
         }
 
         this.start(preset.time);
-    },
+    }
 
     // @time: int (seconds)
-    start: function (time) {
+    start (time) {
         if (this.tic_mainloop_id) {
             Mainloop.source_remove(this.tic_mainloop_id);
             this.tic_mainloop_id = null;
@@ -306,9 +301,9 @@ var SectionMain = new Lang.Class({
         this.panel_item.actor.add_style_class_name('on');
 
         this._tic();
-    },
+    }
 
-    stop: function () {
+    stop () {
         this.clock = this.end_time - GLib.get_monotonic_time();
 
         if (this.tic_mainloop_id) {
@@ -321,9 +316,9 @@ var SectionMain = new Lang.Class({
         this.start_pause_icon.icon_name   = 'timepp-start-symbolic';
         this.start_pause_icon.style_class = 'start-icon';
         this.panel_item.actor.remove_style_class_name('on');
-    },
+    }
 
-    reset: function () {
+    reset () {
         if (this.tic_mainloop_id) {
             Mainloop.source_remove(this.tic_mainloop_id);
             this.tic_mainloop_id = null;
@@ -335,15 +330,15 @@ var SectionMain = new Lang.Class({
         this.header.label.text = _('Timer');
         this.start_pause_icon.hide();
         this.panel_item.actor.remove_style_class_name('on');
-    },
+    }
 
-    _on_timer_expired: function () {
+    _on_timer_expired () {
         this.reset();
         this._send_notif();
         this.dbus_impl.emit_signal('timer_expired', null);
-    },
+    }
 
-    _tic: function () {
+    _tic () {
         this.clock = this.end_time - GLib.get_monotonic_time();
 
         this._update_slider();
@@ -358,9 +353,9 @@ var SectionMain = new Lang.Class({
         this.tic_mainloop_id = Mainloop.timeout_add_seconds(1, () => {
             this._tic();
         });
-    },
+    }
 
-    _update_time_display: function () {
+    _update_time_display () {
         let time = Math.ceil(this.clock / 1000000);
         let txt;
 
@@ -385,20 +380,20 @@ var SectionMain = new Lang.Class({
         this.header.label.text = txt;
         this.panel_item.set_label(txt);
         this.fullscreen.set_banner_text(txt);
-    },
+    }
 
     // Update slider based on the clock.
     // This function is the inverse of the function that is used to calc the
     // clock based on the slider.
-    _update_slider: function () {
+    _update_slider () {
         let x = this.clock / TIMER_MAX_DURATION;
         let y = (Math.log(x * (Math.pow(2, 10) - 1) +1)) / Math.log(2) / 10;
 
         this.slider.setValue(y);
         this.fullscreen.slider.setValue(y);
-    },
+    }
 
-    slider_released: function () {
+    slider_released () {
         if (this.clock < 1000000) {
             this.reset();
         }
@@ -407,9 +402,9 @@ var SectionMain = new Lang.Class({
             this.start();
             this._store_cache();
         }
-    },
+    }
 
-    slider_changed: function (slider, value) {
+    slider_changed (slider, value) {
         this.stop();
 
         if (value < 1) {
@@ -442,9 +437,9 @@ var SectionMain = new Lang.Class({
             this.clock = TIMER_MAX_DURATION;
             this._update_time_display();
         }
-    },
+    }
 
-    _send_notif: function () {
+    _send_notif () {
         if (this.settings.get_boolean('timer-play-sound')) {
             this.sound_player.set_sound_uri(this.settings.get_string('timer-sound-file-path'));
             this.sound_player.play(this.current_preset.repeat_sound);
@@ -486,9 +481,9 @@ var SectionMain = new Lang.Class({
         notif.setUrgency(MessageTray.Urgency.CRITICAL);
 
         this.notif_source.notify(notif);
-    },
+    }
 
-    _show_presets: function () {
+    _show_presets () {
         let presets_view = new TimerPresetsView(this.ext, this);
 
         this.timepicker_container.add_actor(presets_view.actor);
@@ -534,9 +529,9 @@ var SectionMain = new Lang.Class({
             this.header.actor.show();
             this.slider_item.actor.show();
         });
-    },
+    }
 
-    show_fullscreen: function () {
+    show_fullscreen () {
         this.ext.menu.close();
 
         if (! this.fullscreen) {
@@ -545,18 +540,18 @@ var SectionMain = new Lang.Class({
         }
 
         this.fullscreen.open();
-    },
+    }
 
-    _toggle_panel_item_mode: function () {
+    _toggle_panel_item_mode () {
         if (this.settings.get_enum('timer-panel-mode') === 0)
             this.panel_item.set_mode('icon');
         else if (this.settings.get_enum('timer-panel-mode') === 1)
             this.panel_item.set_mode('text');
         else
             this.panel_item.set_mode('icon_text');
-    },
+    }
 
-    highlight_tokens: function (text) {
+    highlight_tokens (text) {
         text = GLib.markup_escape_text(text, -1);
         text = MISC_UTILS.markdown_to_pango(text, this.ext.markdown_map);
         text = MISC_UTILS.split_on_whitespace(text);
@@ -574,9 +569,8 @@ var SectionMain = new Lang.Class({
         }
 
         return text.join(' ').replace(/ *\r?\n */g, '\n');
-    },
-});
-Signals.addSignalMethods(SectionMain.prototype);
+    }
+}; Signals.addSignalMethods(SectionMain.prototype);
 
 
 
@@ -593,10 +587,8 @@ Signals.addSignalMethods(SectionMain.prototype);
 //    - 'start-timer'   (returns a preset obj)
 //    - 'delete-preset' (returns a preset obj)
 // =====================================================================
-const TimerPresetsView = new Lang.Class({
-    Name: 'Timepp.TimerPresetsView',
-
-    _init: function(ext, delegate) {
+class TimerPresetsView {
+    constructor (ext, delegate) {
         this.ext      = ext;
         this.delegate = delegate;
 
@@ -685,9 +677,9 @@ const TimerPresetsView = new Lang.Class({
         this.entry.entry.clutter_text.connect('text-changed', () => this._search_presets());
         this.button_add_preset.connect('clicked', () => this._show_preset_editor());
         this.button_ok.connect('clicked', () => this.emit('ok'));
-    },
+    }
 
-    _search_presets: function () {
+    _search_presets () {
         this.preset_items_scrollbox.remove_all_children();
         let needle = this.entry.entry.get_text().toLowerCase();
 
@@ -707,9 +699,9 @@ const TimerPresetsView = new Lang.Class({
             for (let it of reduced_results)
                 this.preset_items_scrollbox.add_child(it[1].actor);
         }
-    },
+    }
 
-    _show_preset_editor: function (item) {
+    _show_preset_editor (item) {
         let preset       = item ? item.preset : null;
         let is_deletable = Boolean(preset) && !item.is_default;
 
@@ -776,9 +768,9 @@ const TimerPresetsView = new Lang.Class({
             this.entry.entry.grab_key_focus();
             editor.actor.destroy();
         });
-    },
+    }
 
-    _new_preset_item: function (preset) {
+    _new_preset_item (preset) {
         let item = {};
 
         item.preset = preset;
@@ -842,9 +834,9 @@ const TimerPresetsView = new Lang.Class({
 
 
         return item;
-    },
+    }
 
-    _on_preset_item_event: function (item, event) {
+    _on_preset_item_event (item, event) {
         switch (event.type()) {
             case Clutter.EventType.ENTER: {
                 let related = event.get_related();
@@ -886,9 +878,8 @@ const TimerPresetsView = new Lang.Class({
                 break;
             }
         }
-    },
-});
-Signals.addSignalMethods(TimerPresetsView.prototype);
+    }
+}; Signals.addSignalMethods(TimerPresetsView.prototype);
 
 
 
@@ -901,10 +892,8 @@ Signals.addSignalMethods(TimerPresetsView.prototype);
 //
 // @signals: 'ok', 'cancel', 'delete'
 // =====================================================================
-const TimerPresetEditor = new Lang.Class({
-    Name: 'Timepp.TimerPresetEditor',
-
-    _init: function(ext, delegate, preset, is_deletable) {
+class TimerPresetEditor {
+    constructor (ext, delegate, preset, is_deletable) {
         this.ext      = ext;
         this.delegate = delegate;
         this.preset   = preset;
@@ -1012,25 +1001,24 @@ const TimerPresetEditor = new Lang.Class({
         this.checkbox_item.connect('button-press-event', () => {
             this.sound_checkbox.actor.checked = !this.sound_checkbox.actor.checked;
         });
-    },
+    }
 
-    _set_time: function () {
+    _set_time () {
         if (! this.preset) return;
 
         this.hr.set_counter(Math.floor(this.preset.time / 3600));
         this.min.set_counter(Math.floor(this.preset.time % 3600 / 60));
         if (this.sec) this.sec.set_counter(this.preset.time % 60);
-    },
+    }
 
-    _get_time: function () {
+    _get_time () {
         let h   = this.hr.counter * 3600;
         let min = this.min.counter * 60;
         let sec = this.sec ? this.sec.counter : 0;
 
         return h + min + sec;
-    },
-});
-Signals.addSignalMethods(TimerPresetEditor.prototype);
+    }
+}; Signals.addSignalMethods(TimerPresetEditor.prototype);
 
 
 
@@ -1043,12 +1031,9 @@ Signals.addSignalMethods(TimerPresetEditor.prototype);
 //
 // @signals: 'monitor-changed'
 // =====================================================================
-const TimerFullscreen = new Lang.Class({
-    Name    : 'Timepp.TimerFullscreen',
-    Extends : FULLSCREEN.Fullscreen,
-
-    _init: function (ext, delegate, monitor) {
-        this.parent(monitor);
+class TimerFullscreen extends ME.imports.lib.fullscreen.Fullscreen {
+    constructor (ext, delegate, monitor) {
+        super(monitor);
         this.default_style_class = this.actor.style_class;
 
         this.ext      = ext;
@@ -1139,9 +1124,9 @@ const TimerFullscreen = new Lang.Class({
                     return Clutter.EVENT_PROPAGATE;
             }
         });
-    },
+    }
 
-    close: function () {
+    close () {
         this.delegate.sound_player.stop();
 
         if (this.delegate.timer_state === TimerState.OFF) {
@@ -1151,29 +1136,29 @@ const TimerFullscreen = new Lang.Class({
                 this.delegate.settings.get_boolean('timer-show-seconds') ? '00:00:00' : '00:00');
         }
 
-        this.parent();
-    },
+        super.close();
+    }
 
-    on_timer_started: function () {
+    on_timer_started () {
         this.actor.style_class = this.default_style_class;
         this.title.text = '';
         this.start_pause_icon.icon_name   = 'timepp-pause-symbolic';
         this.start_pause_icon.style_class = 'pause-icon';
         this.start_pause_icon.show();
-    },
+    }
 
-    on_timer_stopped: function () {
+    on_timer_stopped () {
         this.actor.style_class = this.default_style_class + ' timer-stopped';
         this.start_pause_icon.icon_name = 'timepp-start-symbolic';
         this.start_pause_icon.style_class = 'start-icon';
-    },
+    }
 
-    on_timer_off: function () {
+    on_timer_off () {
         this.start_pause_icon.hide();
         this.slider.setValue(0);
-    },
+    }
 
-    on_timer_expired: function () {
+    on_timer_expired () {
         if (this.delegate.current_preset.msg) {
             this.title.text = TIMER_EXPIRED_MSG;
             let txt = GLib.markup_escape_text(this.delegate.current_preset.msg, -1);
@@ -1183,6 +1168,5 @@ const TimerFullscreen = new Lang.Class({
         }
 
         this.actor.style_class = this.default_style_class + ' timer-expired';
-    },
-});
-Signals.addSignalMethods(TimerFullscreen.prototype);
+    }
+}; Signals.addSignalMethods(TimerFullscreen.prototype);

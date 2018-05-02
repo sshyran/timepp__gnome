@@ -3,7 +3,6 @@ const Gio       = imports.gi.Gio
 const Shell     = imports.gi.Shell;
 const PopupMenu = imports.ui.popupMenu;
 const Util      = imports.misc.util;
-const Lang      = imports.lang;
 
 
 const ME = imports.misc.extensionUtils.getCurrentExtension();
@@ -23,10 +22,8 @@ const MISC_UTILS = ME.imports.lib.misc_utils;
 //
 // @ext: obj (main extension object)
 // =====================================================================
-var ContextMenu = new Lang.Class({
-    Name: 'Timepp.ContextMenu',
-
-    _init: function (ext) {
+var ContextMenu = class {
+    constructor (ext) {
         this.actor = new St.BoxLayout({ vertical: true, style_class: 'section context-menu-section', x_expand: true });
 
 
@@ -65,8 +62,8 @@ var ContextMenu = new Lang.Class({
             MISC_UTILS.open_web_uri(ME.metadata.translations_url);
             ext.toggle_context_menu();
         });
-    },
-});
+    }
+};
 
 
 // =====================================================================
@@ -75,17 +72,14 @@ var ContextMenu = new Lang.Class({
 // @icon_name : string
 // @label     : string
 // =====================================================================
-const MenuItem = new Lang.Class({
-    Name    : 'Timepp.PopupMenuIconItem',
-    Extends : PopupMenu.PopupBaseMenuItem,
-
-    _init: function (icon_name, label, params) {
-        this.parent(params);
+class MenuItem extends PopupMenu.PopupBaseMenuItem {
+    constructor (icon_name, label, params) {
+        super(params);
 
         this.icon = new St.Icon({ icon_name: icon_name });
         this.actor.add_child(this.icon);
 
         this.label = new St.Label({ text: label });
         this.actor.add_child(this.label);
-    },
-});
+    }
+};
